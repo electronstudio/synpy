@@ -1,11 +1,11 @@
-from synpy.syncopation import *
-import synpy.PRS as PRS
-import synpy.KTH as KTH
-import synpy.LHL as LHL
-import synpy.SG as SG
-import synpy.TMC as TMC
-import synpy.TOB as TOB
-import synpy.WNBD as WNDB
+from synpy3.syncopation import *
+import synpy3.PRS as PRS
+import synpy3.KTH as KTH
+import synpy3.LHL as LHL
+import synpy3.SG as SG
+import synpy3.TMC as TMC
+import synpy3.TOB as TOB
+import synpy3.WNBD as WNDB
 
 import fire
 from gooey import Gooey, GooeyParser

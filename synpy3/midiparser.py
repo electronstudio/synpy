@@ -1,41 +1,44 @@
 """ 
 midi.py -- MIDI classes and parser in Python 
 Placed into the public domain in December 2001 by Will Ware 
-Python MIDI classes: meaningful data structures that represent MIDI 
+Python MIDI classes: meaningful data stuctures that represent MIDI 
 events and other objects. You can read MIDI files to create such objects, or 
 generate a collection of objects and use them to write a MIDI file. 
 Helpful MIDI info: 
 http://crystal.apana.org.au/ghansper/midi_introduction/midi_file_form... 
 http://www.argonet.co.uk/users/lenny/midi/mfile.html 
 """
-import sys, string, types, exceptions
+import sys, string, types
 
 debugflag = 0
 
+def my_cmp(a, b):
+    return (a > b) - (a < b)
 
-def showstr(str, n=16):
-    for x in str[:n]:
+def showst(st, n=16):
+    for x in st[:n]:
         print(('%02x' % ord(x)), end=' ')
     print()
 
 
-def getNumber(str, length):
+def getNumber(st, length):
     # MIDI uses big-endian for everything 
-    sum = 0
+    s = 0
     for i in range(length):
-        sum = (sum << 8) + ord(str[i])
-    return sum, str[length:]
+        s = (s << 8) + st[i]
+        #sum = (sum << 8) + ord(st[i])
+    return s, st[length:]
 
 
-def getVariableLengthNumber(str):
+def getVariableLengthNumber(st):
     sum = 0
     i = 0
     while 1:
-        x = ord(str[i])
+        x = st[i]
         i = i + 1
         sum = (sum << 7) + (x & 0x7F)
         if not (x & 0x80):
-            return sum, str[i:]
+            return sum, st[i:]
 
 
 def putNumber(num, length):
@@ -59,7 +62,7 @@ def putVariableLengthNumber(x):
     return string.join(lst, "")
 
 
-class EnumException(exceptions.Exception):
+class EnumException(Exception):
     pass
 
 
@@ -73,14 +76,14 @@ class Enumeration:
         for x in enumList:
             if type(x) == tuple:
                 x, i = x
-            if type(x) != bytes:
-                raise EnumException("enum name is not a string: " + x)
+            if type(x) != str:
+                raise EnumException("enum name is not a string: " + str(x))
             if type(i) != int:
-                raise EnumException("enum value is not an integer: " + i)
+                raise EnumException("enum value is not an integer: " + str(i))
             if x in uniqueNames:
-                raise EnumException("enum name is not unique: " + x)
+                raise EnumException("enum name is not unique: " + str(x))
             if i in uniqueValues:
-                raise EnumException("enum value is not unique for " + x)
+                raise EnumException("enum value is not unique for " + str(x))
             uniqueNames.append(x)
             uniqueValues.append(i)
             lookup[x] = i
@@ -132,7 +135,7 @@ metaEvents = Enumeration([("SEQUENCE_NUMBER", 0x00),
                           ("TEXT_EVENT", 0x01),
                           ("COPYRIGHT_NOTICE", 0x02),
                           ("SEQUENCE_TRACK_NAME", 0x03),
-                          ("INSTRUMENT_NAME", 0x04),
+                          ("INstUMENT_NAME", 0x04),
                           ("LYRIC", 0x05),
                           ("MARKER", 0x06),
                           ("CUE_POINT", 0x07),
@@ -156,9 +159,11 @@ class MidiEvent:
         self.time = None
         self.channel = self.pitch = self.velocity = self.data = None
 
+
+
     def __cmp__(self, other):
         # assert self.time != None and other.time != None 
-        return cmp(self.time, other.time)
+        return my_cmp(self.time, other.time)
 
     def __repr__(self):
         r = ("<MidiEvent %s, t=%s, track=%s, channel=%s" %
@@ -171,57 +176,58 @@ class MidiEvent:
                 r = r + ", " + attrib + "=" + repr(getattr(self, attrib))
         return r + ">"
 
-    def read(self, time, str):
+    def read(self, time, st):
         global runningStatus
         self.time = time
         # do we need to use running status? 
-        if not (ord(str[0]) & 0x80):
-            str = runningStatus + str
-        runningStatus = x = str[0]
-        x = ord(x)
+        #if not ((st[0]) & 0x80):
+        #    st = runningStatus + st
+        runningStatus = x = st[0]
+        x = x
         y = x & 0xF0
-        z = ord(str[1])
+        z = st[1]
         if channelVoiceMessages.has_value(y):
             self.channel = (x & 0x0F) + 1
             self.type = channelVoiceMessages.whatis(y)
             if (self.type == "PROGRAM_CHANGE" or
                     self.type == "CHANNEL_KEY_PRESSURE"):
                 self.data = z
-                return str[2:]
+                return st[2:]
             else:
                 self.pitch = z
-                self.velocity = ord(str[2])
+                self.velocity = st[2]
                 channel = self.track.channels[self.channel - 1]
                 if (self.type == "NOTE_OFF" or
                         (self.velocity == 0 and self.type == "NOTE_ON")):
                     channel.noteOff(self.pitch, self.time)
                 elif self.type == "NOTE_ON":
                     channel.noteOn(self.pitch, self.time, self.velocity)
-                return str[3:]
+                return st[3:]
         elif y == 0xB0 and channelModeMessages.has_value(z):
             self.channel = (x & 0x0F) + 1
             self.type = channelModeMessages.whatis(z)
             if self.type == "LOCAL_CONTROL":
-                self.data = (ord(str[2]) == 0x7F)
+                self.data = (ord(st[2]) == 0x7F)
             elif self.type == "MONO_MODE_ON":
-                self.data = ord(str[2])
-            return str[3:]
+                self.data = ord(st[2])
+            return st[3:]
         elif x == 0xF0 or x == 0xF7:
             self.type = {0xF0: "F0_SYSEX_EVENT",
                          0xF7: "F7_SYSEX_EVENT"}[x]
-            length, str = getVariableLengthNumber(str[1:])
-            self.data = str[:length]
-            return str[length:]
+            length, st = getVariableLengthNumber(st[1:])
+            self.data = st[:length]
+            return st[length:]
         elif x == 0xFF:
             if not metaEvents.has_value(z):
                 print("Unknown meta event: FF %02X" % z)
                 sys.stdout.flush()
                 raise Exception("Unknown midi event type")
             self.type = metaEvents.whatis(z)
-            length, str = getVariableLengthNumber(str[2:])
-            self.data = str[:length]
-            return str[length:]
-        raise Exception("Unknown midi event type")
+            length, st = getVariableLengthNumber(st[2:])
+            self.data = st[:length]
+            return st[length:]
+        return st[length:]
+        raise Exception("Unknown midi event type "+str(x)+" "+str(type(x)))
 
     def write(self):
         sysex_event_dict = {"F0_SYSEX_EVENT": 0xF0,
@@ -242,13 +248,13 @@ class MidiEvent:
                  chr(self.data))
             return x
         elif self.type in sysex_event_dict:
-            str = chr(sysex_event_dict[self.type])
-            str = str + putVariableLengthNumber(len(self.data))
-            return str + self.data
+            st = chr(sysex_event_dict[self.type])
+            st = st + putVariableLengthNumber(len(self.data))
+            return st + self.data
         elif metaEvents.hasattr(self.type):
-            str = chr(0xFF) + chr(getattr(metaEvents, self.type))
-            str = str + putVariableLengthNumber(len(self.data))
-            return str + self.data
+            st = chr(0xFF) + chr(getattr(metaEvents, self.type))
+            st = st + putVariableLengthNumber(len(self.data))
+            return st + self.data
         else:
             raise "unknown midi event type: " + self.type
 
@@ -300,13 +306,13 @@ class MidiChannel:
 class DeltaTime(MidiEvent):
     type = "DeltaTime"
 
-    def read(self, oldstr):
-        self.time, newstr = getVariableLengthNumber(oldstr)
-        return self.time, newstr
+    def read(self, oldst):
+        self.time, newst = getVariableLengthNumber(oldst)
+        return self.time, newst
 
     def write(self):
-        str = putVariableLengthNumber(self.time)
-        return str
+        st = putVariableLengthNumber(self.time)
+        return st
 
 
 class MidiTrack:
@@ -318,30 +324,30 @@ class MidiTrack:
         for i in range(16):
             self.channels.append(MidiChannel(self, i + 1))
 
-    def read(self, str):
+    def read(self, st):
         time = 0
-        assert str[:4] == "MTrk"
-        length, str = getNumber(str[4:], 4)
+        assert st[:4] == b"MTrk"
+        length, st = getNumber(st[4:], 4)
         self.length = length
-        mystr = str[:length]
-        remainder = str[length:]
-        while mystr:
+        myst = st[:length]
+        remainder = st[length:]
+        while myst:
             delta_t = DeltaTime(self)
-            dt, mystr = delta_t.read(mystr)
+            dt, myst = delta_t.read(myst)
             time = time + dt
             self.events.append(delta_t)
             e = MidiEvent(self)
-            mystr = e.read(time, mystr)
+            myst = e.read(time, myst)
             self.events.append(e)
         return remainder
 
     def write(self):
         time = self.events[0].time
-        # build str using MidiEvents 
-        str = ""
+        # build st using MidiEvents 
+        st = ""
         for e in self.events:
-            str = str + e.write()
-        return "MTrk" + putNumber(len(str), 4) + str
+            st = st + e.write()
+        return "MTrk" + putNumber(len(st), 4) + st
 
     def __repr__(self):
         r = "<MidiTrack %d -- %d events\n" % (self.index, len(self.events))
@@ -377,17 +383,18 @@ class MidiFile:
         self.file.close()
 
     def read(self):
-        self.readstr(self.file.read())
+        self.readst(self.file.read())
 
-    def readstr(self, str):
-        assert str[:4] == "MThd"
-        length, str = getNumber(str[4:], 4)
+    def readst(self, st):
+        print("MIDI readst, ste[:4] " + str(st[:4]))
+        assert st[:4] == b"MThd"
+        length, st = getNumber(st[4:], 4)
         assert length == 6
-        format, str = getNumber(str, 2)
+        format, st = getNumber(st, 2)
         self.format = format
         assert format == 0 or format == 1  # dunno how to handle 2
-        numTracks, str = getNumber(str, 2)
-        division, str = getNumber(str, 2)
+        numTracks, st = getNumber(st, 2)
+        division, st = getNumber(st, 2)
         if division & 0x8000:
             framesPerSecond = -((division >> 8) | -128)
             ticksPerFrame = division & 0xFF
@@ -399,22 +406,22 @@ class MidiFile:
             self.ticksPerQuarterNote = division & 0x7FFF
         for i in range(numTracks):
             trk = MidiTrack(i)
-            str = trk.read(str)
+            st = trk.read(st)
             self.tracks.append(trk)
 
     def write(self):
-        self.file.write(self.writestr())
+        self.file.write(self.writest())
 
-    def writestr(self):
+    def writest(self):
         division = self.ticksPerQuarterNote
         # Don't handle ticksPerSecond yet, too confusing 
         assert (division & 0x8000) == 0
-        str = "MThd" + putNumber(6, 4) + putNumber(self.format, 2)
-        str = str + putNumber(len(self.tracks), 2)
-        str = str + putNumber(division, 2)
+        st = "MThd" + putNumber(6, 4) + putNumber(self.format, 2)
+        st = st + putNumber(len(self.tracks), 2)
+        st = st + putNumber(division, 2)
         for trk in self.tracks:
-            str = str + trk.write()
-        return str
+            st = st + trk.write()
+        return st
 
 
 def main(argv):
