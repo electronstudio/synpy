@@ -1,0 +1,21 @@
+{
+    "bars_with_valid_output": [
+        0,
+        1,
+        2,
+        3
+    ],
+    "bars_without_valid_output": [],
+    "mean_syncopation_per_bar": 1.5,
+    "model_name": "synpy.KTH",
+    "number_of_bars": 4,
+    "number_of_bars_not_measured": 0,
+    "source": "Rhythm_stimuli_text_format/ab.rhy",
+    "summed_syncopation": 6.0,
+    "syncopation_by_bar": [
+        0,
+        3,
+        3,
+        0
+    ]
+}
