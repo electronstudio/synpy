@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
 Author: Chunyang Song
 Institution: Centre for Digital Music, Queen Mary University of London

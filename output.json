@@ -7,7 +7,7 @@
     ],
     "bars_without_valid_output": [],
     "mean_syncopation_per_bar": 1.5,
-    "model_name": "synpy3.KTH",
+    "model_name": "synpy2.KTH",
     "number_of_bars": 4,
     "number_of_bars_not_measured": 0,
     "source": "Rhythm_stimuli_text_format/ab.rhy",

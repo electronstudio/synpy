@@ -1,4 +1,5 @@
-# This python file is a collection of basic functions that are used in the syncopation models. 
+# -*- coding: utf-8 -*-
+# This python file is a collection of basic functions that are used in the syncopation models.
 
 import math
 

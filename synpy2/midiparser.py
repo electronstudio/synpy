@@ -1,4 +1,6 @@
-""" 
+# -*- coding: utf-8 -*-
+
+"""
 midi.py -- MIDI classes and parser in Python 
 Placed into the public domain in December 2001 by Will Ware 
 Python MIDI classes: meaningful data structures that represent MIDI 

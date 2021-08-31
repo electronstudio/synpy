@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
 Authors: Chunyang Song, Christopher Harte
 Institution: Centre for Digital Music, Queen Mary University of London

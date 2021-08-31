@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 from basic_functions import ceiling, string_to_sequence, calculate_bar_ticks, velocity_sequence_to_min_timespan
 import parameter_setter 
