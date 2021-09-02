@@ -18,7 +18,7 @@ models = {"PRS": PRS,
 "SG" : SG,
 "TMC" : TMC,
 "TOB" : TOB,
-"WNBD" : WNDB,
+"WNDB" : WNDB,
 "KTH" : KTH
           }
 
